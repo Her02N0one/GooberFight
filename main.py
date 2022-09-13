@@ -1,22 +1,23 @@
 import os
 from data import DefaultStats, Fighter, punch
+# TODO: Break up "data" library because it's way too vague
 
-secret_code = "test"
-a = 10
-
-fella = [" o ", "/|\\", "/ \\"]
+fella = [
+    ' o ', 
+    '/|\\',
+    '/ \\'
+]
 
 def progress_bar(percent, length, prefix="", filled="#", empty="_"):
     ammount_filled = int(length*percent)
     return f"{prefix}[{filled*ammount_filled}{empty*(length-ammount_filled)}]"
 
 def print_ui(player1, player2):
-    pass
-    print(f"{player2.name}:       {progress_bar(player2.get_health_percent(), 10)}")
+    print(f"{player2.name}:     {progress_bar(player2.get_health_percent(), 15)}")
     print(f"HP:{player2.match_stats.hp}/{player2.stats.health}")
     print("\n".join([(" " * 22) + line for line in fella]))
     print("\n".join([(" " * 1) + line for line in fella]))
-    print(f"{player1.name}:      {progress_bar(player1.get_health_percent(), 10)}")
+    print(f"{player1.name}:       {progress_bar(player1.get_health_percent(), 15)}")
     print(f"HP:{player1.match_stats.hp}/{player1.stats.health}")
 
 
@@ -57,11 +58,13 @@ def main():
         if i == "fight":
             show_moves(player_1)
         elif i == "counter":
-            pass
+            print("NYI")
         elif i == "special":
-            pass
+            print("NYI")
         elif i == "surrender":
-            pass
+            os.system('clear')
+            print("ok")
+            return 0
         elif i in player_1.moves:
             print_menu()
         elif i == "":
