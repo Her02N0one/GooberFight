@@ -12,14 +12,13 @@ class PerFightStats: # will be reset to defaults after every fight
     modifiable_stats: DefaultStats
     hp: float
     battle_conditions: int # flags for conditions, probably. unused so far
-    
 
 @dataclass
 class DefaultAttack:
     name: str
     move: callable
 
-class Fighter:
+class Fighter: # TODO: Move to its own file.
     move_limit = 4
     def __init__(self, name, stats):
         self.name = name
@@ -31,7 +30,7 @@ class Fighter:
     def get_health_percent(self):
         return self.match_stats.hp/self.stats.health
     
-    def start_match(self):
+    def start_match(self): # will be called by engine automatically.
         # reset any stats that were temporarily changed when match starts
         self.match_stats = PerFightStats(self.stats, self.stats.health, 0)
         self.alive = True
@@ -50,6 +49,7 @@ class Fighter:
 def simple_damage(attacker: Fighter, opponent: Fighter, damage):
     opponent.decrease_hp(damage * attacker.stats.attack)
 
-punch = DefaultAttack("punch", (lambda p1, p2: simple_damage(p1, p2, 10)))
+# TODO: Move all attack logic to own file
+punch = DefaultAttack("punch", (lambda p1, p2: simple_damage(p1, p2, 10))) 
 
 

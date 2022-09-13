@@ -6,16 +6,19 @@ a = 10
 
 fella = [" o ", "/|\\", "/ \\"]
 
-def progress_bar(percent, length, prefix="HP:", filled="#", empty="_"):
+def progress_bar(percent, length, prefix="", filled="#", empty="_"):
     ammount_filled = int(length*percent)
-    return f"HP:[{filled*ammount_filled}{empty*(length-ammount_filled)}]"
+    return f"{prefix}[{filled*ammount_filled}{empty*(length-ammount_filled)}]"
 
 def print_ui(player1, player2):
     pass
-    print(f"{player2.name}:      {progress_bar(player2.get_health_percent(), 10)}")
+    print(f"{player2.name}:       {progress_bar(player2.get_health_percent(), 10)}")
+    print(f"HP:{player2.match_stats.hp}/{player2.stats.health}")
     print("\n".join([(" " * 22) + line for line in fella]))
-    print("\n".join(fella))
+    print("\n".join([(" " * 1) + line for line in fella]))
     print(f"{player1.name}:      {progress_bar(player1.get_health_percent(), 10)}")
+    print(f"HP:{player1.match_stats.hp}/{player1.stats.health}")
+
 
 def print_menu():
     print()
@@ -25,34 +28,47 @@ def print_menu():
 
 def show_moves(player: Fighter):
     for move in player.moves:
-        print(move)
+        print(f"| {move}")
     
 
 def main():
+    # lots of debug and stub functions here, would love to get rid
+    # TODO: create a battle engine class, to handle state in a safer way.
     player_1 = Fighter("Goober", DefaultStats(100, 10, 10, 1.1))
     player_1.add_move(punch)
     player_2 = Fighter("Shloober", DefaultStats(100, 10, 10, 1.1))
     player_2.add_move(punch)
 
-    print("Hit enter to start...")
-    
+    print_ui(player_1, player_2)
+    print_menu()
     while True:
-        i = input("> ")
+
+        # take input, then clear and redraw.
+        i = input("> ").lower()
         os.system('clear')
-        print_ui(player_1, player_2)
-        print("what u tryna do?: ")
 
-        print()
-        if i == "quit":
-            return 0
-        elif i == "fight":
-            show_moves(player_1)
-        elif i in player_1.moves:
+        # if the input is the name of a move, have that move be used on the opponent.
+        if i in player_1.moves:
             player_1.moves[i].move(player_1, player_2)
+        
+        
+        print_ui(player_1, player_2)
+        
+        if i == "fight":
+            show_moves(player_1)
+        elif i == "counter":
+            pass
+        elif i == "special":
+            pass
+        elif i == "surrender":
+            pass
+        elif i in player_1.moves:
+            print_menu()
+        elif i == "":
+            print_menu()
         else:
+            print_menu()
             print(f'did not understand input: "{i}"')
-    return 0
-
 
 if __name__ == "__main__":
     main()
