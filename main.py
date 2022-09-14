@@ -1,7 +1,11 @@
 import os
-from data import DefaultStats, Fighter, punch
-# TODO: Break up "data" library because it's way too vague
+from data import DefaultStats
+from fighters import Fighter
+import moves
+import console_util
 
+# TODO: Break up "data" library because it's way too vague
+# TODO: Rework text based drawing system to be more dynamicly generated allowing for decorators and stuff and borders tables etc.
 fella = [
     ' o ', 
     '/|\\',
@@ -13,38 +17,53 @@ def progress_bar(percent, length, prefix="", filled="#", empty="_"):
     return f"{prefix}[{filled*ammount_filled}{empty*(length-ammount_filled)}]"
 
 def print_ui(player1, player2):
-    print(f"{player2.name}:     {progress_bar(player2.get_health_percent(), 15)}")
-    print(f"HP:{player2.match_stats.hp}/{player2.stats.health}")
-    print("\n".join([(" " * 22) + line for line in fella]))
-    print("\n".join([(" " * 1) + line for line in fella]))
-    print(f"{player1.name}:       {progress_bar(player1.get_health_percent(), 15)}")
-    print(f"HP:{player1.match_stats.hp}/{player1.stats.health}")
+    l = [
+        f"{player2.name}:     {progress_bar(player2.get_health_percent(), 15)}",
+        f"HP:{player2.match_stats.hp}/{player2.stats.health}",
+        22*" " + fella[0],
+        22*" " + fella[1],
+        22*" " + fella[2],
+        1*" " + fella[0],
+        1*" " + fella[1],
+        1*" " + fella[2],
+        f"{player1.name}:       {progress_bar(player1.get_health_percent(), 15)}",
+        f"HP:{player1.match_stats.hp}/{player1.stats.health}"
+    ]
+
+    console_util.draw_border(l)
 
 
 def print_menu():
-    print()
-    print("| Fight       Counter   |")
-    print("| Special     Surrender |")
-    print()
+    print("╔════════════════╦════════════════╗")
+    print("║    Fight       ║   Counter      ║")
+    print("╠════════════════╬════════════════╣")
+    print("║    Special     ║   Surrender    ║")
+    print("╚════════════════╩════════════════╝")
 
 def show_moves(player: Fighter):
-    for move in player.moves:
-        print(f"| {move}")
+    print("╔═════════════════════════════════╗")
+    if len(player.moves) > 0:
+        for move in player.moves:
+            print(f"║  {move} ")
+    else:
+        print("No Moves!?")
+    print("╚═════════════════════════════════╝")
+
     
 
 def main():
     # lots of debug and stub functions here, would love to get rid
     # TODO: create a battle engine class, to handle state in a safer way.
     player_1 = Fighter("Goober", DefaultStats(100, 10, 10, 1.1))
-    player_1.add_move(punch)
+    for move in moves.basic:
+        player_1.add_move(move)
     player_2 = Fighter("Shloober", DefaultStats(100, 10, 10, 1.1))
-    player_2.add_move(punch)
 
     print_ui(player_1, player_2)
     print_menu()
     while True:
 
-        # take input, then clear and redraw.
+        # after last frame finishes, take new input, then clear and redraw.
         i = input("> ").lower()
         os.system('clear')
 
@@ -58,9 +77,9 @@ def main():
         if i == "fight":
             show_moves(player_1)
         elif i == "counter":
-            print("NYI")
+            print("!!NYI!!")
         elif i == "special":
-            print("NYI")
+            print("!!NYI!!")
         elif i == "surrender":
             os.system('clear')
             print("ok")
