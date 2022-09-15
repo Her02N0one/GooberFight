@@ -1,0 +1,31 @@
+    # return 0
+    # while True:
+
+    #     # after last frame finishes, take new input, then clear and redraw.
+    #     i = input("> ").lower()
+    #     os.system('clear')
+
+    #     # if the input is the name of a move, have that move be used on the opponent.
+    #     if i in player_1.moves:
+    #         player_1.moves[i].move(player_1, player_2)
+        
+        
+    #     print_ui(player_1, player_2)
+        
+    #     if i == "fight":
+    #         show_moves(player_1)
+    #     elif i == "counter":
+    #         print("!!NYI!!")
+    #     elif i == "special":
+    #         print("!!NYI!!")
+    #     elif i == "surrender":
+    #         os.system('clear')
+    #         print("ok")
+    #         return 0
+    #     elif i in player_1.moves:
+    #         print_menu()
+    #     elif i == "":
+    #         print_menu()
+    #     else:
+    #         print_menu()
+    #         print(f'did not understand input: "{i}"')

@@ -1,38 +1,59 @@
 import data
+from functools import partial
+import random
 
-# TODO: when game engine evolves to a class, have these functions also be passed a reference to fight engine. to send events to it.
-# async functions maybe? or generators for potential multi hit moves. for stuff out of scope to still happen between.
+WAIT_FOR_OPPONENT = 0
+SKIP_OPPONENTS_TURN = 1
 
-def simple_damage(attacker, opponent, damage):
+# TODO: Find solution on how to let engine know wheather or not opponent can strike between moves.
+# skip turn flag on fighter class maybe? 
+# I try to avoid using flags when I can but this seems like the only option. 
+
+def simple_damage(damage, attacker, opponent, engine):
     # takes a number of damage as a input, multiplied with attacker's strength stat.
     opponent.decrease_hp(damage * attacker.stats.attack)
+    yield WAIT_FOR_OPPONENT
 
-def multiple_damage(attacker, opponent, damage, multiplier):
-    #essentialy makes a move "hit multiple times"
-    opponent.decrease_hp((damage * attacker.stats.attack) * multiplier)
 
-def super_damage(attacker, opponenet, damage, boost, hurted):
+def multi_hit(damage, chance, max, damp, attacker, opponent, engine):
+    hits = 0
+    while True:
+        hits += 1
+        opponent.decrease_hp((damage * (damp**hits)) * attacker.stats.attack)
+        if hits > 1:
+            engine.text_queue.append(f"Hit {hits} times!" + "!" * hits)
+        if (chance < random.random()) or hits >= max:
+            break
+        else:
+            yield SKIP_OPPONENTS_TURN
+    yield WAIT_FOR_OPPONENT
+
+def charge_move(damage, turns, attacker, opponent, engine):
+    engine.text_queue.append(f"{attacker.name} is charging an attack!")
+    yield WAIT_FOR_OPPONENT
+    for x in range(turns - 1):
+        engine.text_queue.append(f"{attacker.name} is still charging an attack!")
+        yield WAIT_FOR_OPPONENT
+
+    engine.text_queue.append(f"{attacker.name} Struck!")
+    opponent.decrease_hp(damage * attacker.stats.attack)
+    yield WAIT_FOR_OPPONENT
+
+
+def recoil_hit(damage, recoil, attacker, opponent, engine):
     #takes health from the attacker and boosts the strength stats for this move
-    attacker.decrease_hp(hurted)
-    opponenet.decrease_hp(damage * (boost * attacker.stats.attack))
+    opponent.decrease_hp(damage * attacker.stats.attack)
+    yield SKIP_OPPONENTS_TURN
 
-punch = data.DefaultAttack("punch", (lambda p1, p2: simple_damage(p1, p2, 10))) 
-schlap = data.DefaultAttack("schlap", (lambda p1, p2: simple_damage(p1, p2, 13)))
-two_piece = data.DefaultAttack("two piece", (lambda p1, p2: multiple_damage(p1, p2, 8, 2)))
-one_piece = data.DefaultAttack("one piece", (lambda p1, p2: super_damage(p1, p2, 20, 2, 10)))
+    engine.text_queue.append(f"{attacker.name} was hurt by recoil")
+    attacker.decrease_hp(recoil)
+    yield WAIT_FOR_OPPONENT
 
-basic = [punch, schlap, two_piece, one_piece] 
+# TODO: add a lang table or sum to convert id to localized name. so they don't have to be fully lowercase.
+punch = data.DefaultAttack("punch", partial(simple_damage, 6))
+schlap = data.DefaultAttack("multi", partial(multi_hit, 10, 1, 5, 0.8))
+two_piece = data.DefaultAttack("two piece", partial(charge_move, 18, 1))
+one_piece = data.DefaultAttack("one piece", partial(recoil_hit, 20, 10))
 
-# seems like this could just be a regular list
-# u had it in the data class i think saying it would be a dict, i found it, its in fighters, u said the move sets would be a dict, ooooo, isee, tbh tho its better this way, 
-# cuz when it has more than just 4 itll be eaier to choose which ones to print, like when i have 6 moves and the player only can have 4, i can use the numbers to easily call the moves, right?
-# yeah but they would be called in the same with with a list. other than the list starting at 0 instead of 1 but that wouldn't be an issue. just basic[n-1]
-# I'm not sure I understand but I'll roll with it.
-# I dunno I didn't make any data class for something like this. 
-# the moves dict in the fighter class is a dict so that they can be referenced by their name by the player input which would be a string
-
-# if your indexing a dict with accending integers it's basically just a list with extra step
-
-
-# work with what you're doing now because if it ends up being just like a list, changing it to be that will be incredibly easy.
-# if I'm just not understanding though, then what your doing will be clearer to me when you're done. so in the end I guess it don't matter
+taekwondo = []
+basic = [punch, schlap, two_piece, one_piece]
