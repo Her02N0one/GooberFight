@@ -1,8 +1,10 @@
-import console_util
 import random
+
+import console_util
 
 WAIT_FOR_OPPONENT = 0
 SKIP_OPPONENTS_TURN = 1
+
 
 # TODO: move functions which should be static into a seperate file.
 class BattleEngine:
@@ -14,6 +16,7 @@ class BattleEngine:
 
     handels all access to private methods
     """
+
     def __init__(self, p1, p2):
         self.p1 = p1
         self.p2 = p2
@@ -29,17 +32,15 @@ class BattleEngine:
         print("║    Special     ║   Surrender    ║")
         print("╚════════════════╩════════════════╝")
 
-    
     def show_moves(self, player):
         print("╔═════════════════════════════════╗")
         if len(player.moves) > 0:
             for move in player.moves:
-                print(f"║  {move}" + " "*(35-len(move)-4) + "║")
+                print(f"║  {move}" + " " * (35 - len(move) - 4) + "║")
         else:
             print("ERROR: No Moves!?")
         print("╚═════════════════════════════════╝")
 
-    
     def parse_input(self, i):
         # TODO: maybe handle parsing inputs outside of the engine. so that it can stand on it's own.
         i = i.lower()
@@ -49,29 +50,37 @@ class BattleEngine:
             self.current_submenu = self.print_menu
         if i in self.p1.moves:
             self.p1_move = self.p1.moves[i].move(self.p1, self.p2, self)
-            print("test")
             self.text_queue.append(f"{self.p1.name} used {self.p1.moves[i].name}")
         if i == "special":
             pass
         if i == "surrender":
             return -2
-    
+
     def update(self):
-        outcome = None
+        # holy fucking shit this code is so bad to look at I hate it
+        p1_outcome = None
+        p2_outcome = None
+
         if self.p1_move is not None:
             try:
-                outcome = next(self.p1_move)
+                p1_outcome = next(self.p1_move)
             except StopIteration:
                 self.p1_move = None
-        
-        if outcome == WAIT_FOR_OPPONENT:
-            # self.p2_move = random.choice(self.p2.moves)
-            print(self.p2_move)
-        
+
+        if p1_outcome == WAIT_FOR_OPPONENT:
+            move = random.choice(list(self.p2.moves.keys()))
+            self.p2_move = self.p2.moves[move].move(self.p2, self.p1, self)
+            self.text_queue.append(f"{self.p2.name} used {move}")
+
+        if self.p2_move is not None:
+            try:
+                p2_outcome = next(self.p2_move)
+            except StopIteration:
+                self.p2_move = None
+
         self.print_battle()
         self.print_sub_menu()
 
-    
     def print_battle(self):
         p1_data = console_util.player_data(self.p1)
         p2_data = console_util.player_data(self.p2)
@@ -93,4 +102,3 @@ class BattleEngine:
             self.text_queue.remove(self.text_queue[0])
             return
         self.current_submenu()
-        

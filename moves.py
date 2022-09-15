@@ -1,9 +1,11 @@
-import data
-from functools import partial
 import random
+from functools import partial
+
+import data
 
 WAIT_FOR_OPPONENT = 0
 SKIP_OPPONENTS_TURN = 1
+
 
 # TODO: Find solution on how to let engine know wheather or not opponent can strike between moves.
 # skip turn flag on fighter class maybe? 
@@ -19,7 +21,7 @@ def multi_hit(damage, chance, max, damp, attacker, opponent, engine):
     hits = 0
     while True:
         hits += 1
-        opponent.decrease_hp((damage * (damp**hits)) * attacker.stats.attack)
+        opponent.decrease_hp((damage * (damp ** hits)) * attacker.stats.attack)
         if hits > 1:
             engine.text_queue.append(f"Hit {hits} times!" + "!" * hits)
         if (chance < random.random()) or hits >= max:
@@ -27,6 +29,7 @@ def multi_hit(damage, chance, max, damp, attacker, opponent, engine):
         else:
             yield SKIP_OPPONENTS_TURN
     yield WAIT_FOR_OPPONENT
+
 
 def charge_move(damage, turns, attacker, opponent, engine):
     engine.text_queue.append(f"{attacker.name} is charging an attack!")
@@ -41,13 +44,14 @@ def charge_move(damage, turns, attacker, opponent, engine):
 
 
 def recoil_hit(damage, recoil, attacker, opponent, engine):
-    #takes health from the attacker and boosts the strength stats for this move
+    # takes health from the attacker and boosts the strength stats for this move
     opponent.decrease_hp(damage * attacker.stats.attack)
     yield SKIP_OPPONENTS_TURN
 
     engine.text_queue.append(f"{attacker.name} was hurt by recoil")
     attacker.decrease_hp(recoil)
     yield WAIT_FOR_OPPONENT
+
 
 # TODO: add a lang table or sum to convert id to localized name. so they don't have to be fully lowercase.
 punch = data.DefaultAttack("punch", partial(simple_damage, 6))
