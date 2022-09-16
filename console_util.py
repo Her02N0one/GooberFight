@@ -18,7 +18,7 @@ def progress_bar(percent, length, prefix="", filled="#", empty="_"):
 def player_data(player):
     return [
         f"{player.name}",
-        f"HP:{int(player.match_stats.hp)}/{player.stats.health}    {progress_bar(player.get_health_percent(), 15)}",
+        f"HP:{int(player.hp)}/{player.stats.health}    {progress_bar(player.get_health_percent(), 15)}",
     ]
 
 
