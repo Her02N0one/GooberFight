@@ -4,9 +4,10 @@ import console_util
 
 WAIT_FOR_OPPONENT = 0
 SKIP_OPPONENTS_TURN = 1
+SKIP_PLAYERS_TURN = 2
 
 
-# TODO: move functions which should be static into a seperate file.
+# TODO: move functions which should be static into a separate file.
 class BattleEngine:
     """
     Holds the state of the current battle
@@ -14,7 +15,7 @@ class BattleEngine:
     Wraps a text buffer that can be appended by reference 
     and will update each frame until done and then return to grabbing input.
 
-    handels all access to private methods
+    handles all access to private methods
     """
 
     def __init__(self, p1, p2):
@@ -23,78 +24,64 @@ class BattleEngine:
         self.text_queue = []
         self.p1_move = None
         self.p2_move = None
-        self.current_submenu = self.print_menu
-
-    def print_menu(self):
-        print("╔════════════════╦════════════════╗")
-        print("║    Fight       ║   Counter      ║")
-        print("╠════════════════╬════════════════╣")
-        print("║    Special     ║   Surrender    ║")
-        print("╚════════════════╩════════════════╝")
-
-    def show_moves(self, player):
-        print("╔═════════════════════════════════╗")
-        if len(player.moves) > 0:
-            for move in player.moves:
-                print(f"║  {move}" + " " * (35 - len(move) - 4) + "║")
-        else:
-            print("ERROR: No Moves!?")
-        print("╚═════════════════════════════════╝")
+        self.p1_outcome = None
+        self.p2_outcome = None
+        self.current_submenu = console_util.print_menu
 
     def parse_input(self, i):
         # TODO: maybe handle parsing inputs outside of the engine. so that it can stand on it's own.
         i = i.lower()
         if i == "fight":
-            self.current_submenu = lambda: self.show_moves(self.p1)
-        if i == "" or i.lower() == "back":
-            self.current_submenu = self.print_menu
-        if i in self.p1.moves:
+            self.current_submenu = lambda: console_util.show_moves(self.p1)
+        elif i == "" or i.lower() == "back":
+            self.current_submenu = console_util.print_menu
+
+        elif i in self.p1.moves:
+
             self.p1_move = self.p1.moves[i].move(self.p1, self.p2, self)
             self.text_queue.append(f"{self.p1.name} used {self.p1.moves[i].name}")
-        if i == "special":
+
+            mv = random.choice(list(self.p2.moves.keys()))
+            self.p2_move = self.p2.moves[mv].move\
+                (self.p2, self.p1, self)
+            self.text_queue.append(f"{self.p2.name} used {mv}")
+
+        elif i == "special":
             pass
-        if i == "surrender":
+        elif i == "surrender":
             return -2
 
     def update(self):
+        """
+
+        :return:
+        """
         # holy fucking shit this code is so bad to look at I hate it
-        p1_outcome = None
-        p2_outcome = None
+        # TODO: Fix this grossness
 
         if self.p1_move is not None:
             try:
-                p1_outcome = next(self.p1_move)
+                self.p1_outcome = next(self.p1_move)
             except StopIteration:
                 self.p1_move = None
+                self.p1_outcome = None
 
-        if p1_outcome == WAIT_FOR_OPPONENT:
+
+        if self.p1_outcome == WAIT_FOR_OPPONENT:
             move = random.choice(list(self.p2.moves.keys()))
             self.p2_move = self.p2.moves[move].move(self.p2, self.p1, self)
             self.text_queue.append(f"{self.p2.name} used {move}")
 
-        if self.p2_move is not None:
-            try:
-                p2_outcome = next(self.p2_move)
-            except StopIteration:
-                self.p2_move = None
+        if self.p2_outcome != WAIT_FOR_OPPONENT:
+            if self.p2_move is not None:
+                try:
+                    self.p2_outcome = next(self.p2_move)
+                except StopIteration:
+                    self.p2_move = None
+                    self.p2_outcome = None
 
-        self.print_battle()
+        console_util.print_battle(self.p1, self.p2)
         self.print_sub_menu()
-
-    def print_battle(self):
-        p1_data = console_util.player_data(self.p1)
-        p2_data = console_util.player_data(self.p2)
-        p1_design = console_util.offset_multiline(self.p1.design, 1)
-        p2_design = console_util.offset_multiline(self.p2.design, 22)
-
-        console_util.draw_border(
-            [
-                *p2_data,
-                *p2_design,
-                *p1_design,
-                *p1_data
-            ]
-        )
 
     def print_sub_menu(self):
         if len(self.text_queue) > 0:

@@ -10,7 +10,7 @@ class DefaultStats:
 
 
 @dataclass
-class PerFightStats:  # will be reset to defaults after every fight
+class PerFightStats:  # will be reset to default after every fight
     modifiable_stats: DefaultStats
     hp: float
     battle_conditions: int  # flags for conditions, probably. unused so far

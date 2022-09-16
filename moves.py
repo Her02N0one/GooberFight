@@ -4,17 +4,18 @@ from functools import partial
 import data
 
 WAIT_FOR_OPPONENT = 0
-SKIP_OPPONENTS_TURN = 1
+SKIP_NEXT_TURN = 1
+SKIP_PLAYERS_TURN = 2
 
 
-# TODO: Find solution on how to let engine know wheather or not opponent can strike between moves.
+# TODO: Find solution on how to let engine know whether or not opponent can strike between moves.
 # skip turn flag on fighter class maybe? 
 # I try to avoid using flags when I can but this seems like the only option. 
 
 def simple_damage(damage, attacker, opponent, engine):
-    # takes a number of damage as a input, multiplied with attacker's strength stat.
+    # takes a number of damage as an input, multiplied with attacker's strength stat.
     opponent.decrease_hp(damage * attacker.stats.attack)
-    yield WAIT_FOR_OPPONENT
+    yield
 
 
 def multi_hit(damage, chance, max, damp, attacker, opponent, engine):
@@ -27,8 +28,8 @@ def multi_hit(damage, chance, max, damp, attacker, opponent, engine):
         if (chance < random.random()) or hits >= max:
             break
         else:
-            yield SKIP_OPPONENTS_TURN
-    yield WAIT_FOR_OPPONENT
+            yield SKIP_NEXT_TURN
+    yield
 
 
 def charge_move(damage, turns, attacker, opponent, engine):
@@ -40,17 +41,17 @@ def charge_move(damage, turns, attacker, opponent, engine):
 
     engine.text_queue.append(f"{attacker.name} Struck!")
     opponent.decrease_hp(damage * attacker.stats.attack)
-    yield WAIT_FOR_OPPONENT
+    yield
 
 
 def recoil_hit(damage, recoil, attacker, opponent, engine):
     # takes health from the attacker and boosts the strength stats for this move
     opponent.decrease_hp(damage * attacker.stats.attack)
-    yield SKIP_OPPONENTS_TURN
+    yield SKIP_NEXT_TURN
 
     engine.text_queue.append(f"{attacker.name} was hurt by recoil")
     attacker.decrease_hp(recoil)
-    yield WAIT_FOR_OPPONENT
+    yield
 
 
 # TODO: add a lang table or sum to convert id to localized name. so they don't have to be fully lowercase.

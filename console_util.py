@@ -6,13 +6,13 @@ def draw_border(text_array):
     a = len(max(text_array, key=len))
     print("╔" + ("═" * (a + 2) + "╗"))
     for line in text_array:
-        print("║ " + line + " " * ((a - len(line))) + " ║")
+        print("║ " + line + " " * (a - len(line)) + " ║")
     print("╚" + ("═" * (a + 2) + "╝"))
 
 
 def progress_bar(percent, length, prefix="", filled="#", empty="_"):
-    ammount_filled = int(length * percent)
-    return f"{prefix}[{filled * ammount_filled}{empty * (length - ammount_filled)}]"
+    amount_filled = int(length * percent)
+    return f"{prefix}[{filled * amount_filled}{empty * (length - amount_filled)}]"
 
 
 def player_data(player):
@@ -37,3 +37,37 @@ def delay_print(text, delay):
 
 def table(w, h):
     pass
+
+
+def print_battle(p1, p2):
+    p1_data = player_data(p1)
+    p2_data = player_data(p2)
+    p1_design = offset_multiline(p1.design, 1)
+    p2_design = offset_multiline(p2.design, 22)
+
+    draw_border(
+        [
+            *p2_data,
+            *p2_design,
+            *p1_design,
+            *p1_data
+        ]
+    )
+
+
+def print_menu():
+    print("╔════════════════╦════════════════╗")
+    print("║    Fight       ║   Counter      ║")
+    print("╠════════════════╬════════════════╣")
+    print("║    Special     ║   Surrender    ║")
+    print("╚════════════════╩════════════════╝")
+
+
+def show_moves(player):
+    print("╔═════════════════════════════════╗")
+    if len(player.moves) > 0:
+        for move in player.moves:
+            print(f"║  {move}" + " " * (35 - len(move) - 4) + "║")
+    else:
+        print("ERROR: No Moves!?")
+    print("╚═════════════════════════════════╝")
