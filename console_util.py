@@ -1,6 +1,8 @@
 import sys
 import time
 
+from fighters import Fighter
+
 
 def draw_border(text_array):
     a = len(max(text_array, key=len))
@@ -15,7 +17,7 @@ def progress_bar(percent, length, prefix="", filled="#", empty="_"):
     return f"{prefix}[{filled * amount_filled}{empty * (length - amount_filled)}]"
 
 
-def player_data(player):
+def player_data(player: Fighter):
     return [
         f"{player.name}",
         f"HP:{int(player.hp)}/{player.stats.health}    {progress_bar(player.get_health_percent(), 15)}",
@@ -27,16 +29,13 @@ def offset_multiline(string_array, offset):
 
 
 def delay_print(text, delay):
+    print("  ", end='')
     for i in text:
         time.sleep(delay)
         print(i, end='')
         sys.stdout.flush()
     print()
     time.sleep(0.2)
-
-
-def table(w, h):
-    pass
 
 
 def print_battle(p1, p2):
@@ -67,7 +66,7 @@ def show_moves(player):
     print("╔═════════════════════════════════╗")
     if len(player.moves) > 0:
         for move in player.moves:
-            print(f"║  {move}" + " " * (35 - len(move) - 4) + "║")
+            print(f"║  {move.name}" + " " * (35 - len(move.name) - 4) + "║")
     else:
         print("ERROR: No Moves!?")
     print("╚═════════════════════════════════╝")

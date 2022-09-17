@@ -1,56 +1,68 @@
-import random
-import console_util
-from fighters import Fighter
+
 import data
+from fighters import Fighter
 
 
-
-# TODO: move functions which should be static into a separate file.
 class BattleEngine:
     """
     Holds the state of the current battle
     
-    Wraps a text buffer that can be appended by reference 
-    and will update each frame until done and then return to grabbing input.
-
-    handles all access to private methods
+    Wraps a text buffer that should hold info on what's happening, to display.
     """
 
     def __init__(self, p1: Fighter, p2: Fighter):
         self.p1 = p1
         self.p2 = p2
-        self.text_queue = []
-        self.current_submenu = console_util.print_menu
+        self._text_queue = []
 
-    # maybe "submenu" could be a class instead of a function
-    def change_submenu(self, new_submenu):
-        self.current_submenu = new_submenu
-    
-    def activate_move(self, player: Fighter, opponent: Fighter, attack: data.DefaultAttack):
-        player.active_move = attack.move(player, opponent, self)
-    
+    # Fighter related methods
+    def get_opponent(self, player):
+        if player == self.p1:
+            return self.p2
+        if player == self.p2:
+            return self.p1
 
+    def get_order(self):
+        order = [self.p1, self.p2]
+        order.sort(key=lambda fighter: fighter.stats.speed, reverse=True)
+        return order
+
+    # Action Related methods
+    def activate_action(self, attacker: Fighter):
+        if type(attacker.action) == data.Action:
+            self.add_text(f"{attacker.name} used {attacker.action.name}")
+            attacker.action = attacker.action.action(attacker, self)
+            attacker.state = data.ActionState.CONTINUE
+
+    def do_action(self, attacker: Fighter):
+        self.activate_action(attacker)
+        yield
+
+        for _ in attacker.do_action():
+            yield
+
+    # text queue methods
+    def has_text(self):
+        return len(self._text_queue) > 0
+
+    def pop_text(self):
+        if self.has_text():
+            text = self._text_queue[0]
+            self._text_queue.remove(self._text_queue[0])
+            return text
+
+    def add_text(self, text: str):
+        self._text_queue.append(text)
+
+    # heart of the engine
     def update(self):
+        while True:
+            if self.p2.action is None:
+                # player 2 AI will go here.
+                self.p2.activate_move(self.p2.moves[0])
 
-        if self.p1.active_move is not None:
-            try:
-                self.p1.state = next(self.p1.active_move)
-            except StopIteration:
-                self.p1.active_move = None
-
-        if self.p2.active_move is not None:
-            try:
-                self.p1.state = next(self.p2.active_move)
-            except StopIteration:
-                self.p2.active_move = None
-
-        
-        console_util.print_battle(self.p1, self.p2)
-        self.print_sub_menu()
-
-    def print_sub_menu(self):
-        if len(self.text_queue) > 0:
-            console_util.delay_print(self.text_queue[0], 0.05)
-            self.text_queue.remove(self.text_queue[0])
-            return
-        self.current_submenu()
+            if self.p1.action is not None and self.p2.action is not None:
+                for player in self.get_order():
+                    for _ in self.do_action(player):
+                        yield
+            yield

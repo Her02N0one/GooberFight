@@ -1,57 +1,83 @@
 import random
-from functools import partial
+from typing import Iterator
+from typing import TYPE_CHECKING
 
-from data import DefaultAttack, PlayerStates
+from data import Action, ActionState
+
+if TYPE_CHECKING:
+    from fighters import Fighter
+    from engine import BattleEngine
 
 
+def test_move(attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+    opponent = engine.get_opponent(attacker)
 
-# TODO: Find solution on how to let engine know whether or not opponent can strike between moves.
-# skip turn flag on fighter class maybe? 
-# I try to avoid using flags when I can but this seems like the only option. 
+    engine.add_text(f"{attacker.name} is charging an attack!")
+    yield ActionState.PAUSE
 
-def simple_damage(damage, attacker, opponent, engine):
+    engine.add_text(f"{attacker.name} struck")
+    yield ActionState.CONTINUE
+    engine.add_text(f"{attacker.name} struck again!")
+
+    yield ActionState.END
+
+
+def simple_damage(damage, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+    opponent = engine.get_opponent(attacker)
+
     # takes a number of damage as an input, multiplied with attacker's strength stat.
     opponent.decrease_hp(damage * attacker.stats.attack)
+    yield ActionState.END
 
 
-def multi_hit(damage, chance, max, damp, attacker, opponent, engine):
+def multi_hit(damage, chance, max_hits, damp, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+    opponent = engine.get_opponent(attacker)
+
     hits = 0
     while True:
         hits += 1
         opponent.decrease_hp((damage * (damp ** hits)) * attacker.stats.attack)
         if hits > 1:
-            engine.text_queue.append(f"Hit {hits} times!" + "!" * hits)
-        if (chance < random.random()) or hits >= max:
+            engine.add_text(f"Hit {hits} times!" + "!" * hits)
+        if (chance < random.random()) or hits >= max_hits:
             break
         else:
-            yield PlayerStates.SKIP_OPPONENTS_TURN
+            yield ActionState.CONTINUE
 
 
-def charge_move(damage, turns, attacker, opponent, engine):
-    engine.text_queue.append(f"{attacker.name} is charging an attack!")
-    yield PlayerStates.WAIT_FOR_OPPONENT
+def charge_move(damage, turns, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+    opponent = engine.get_opponent(attacker)
+
+    engine.add_text(f"{attacker.name} is charging an attack!")
+    yield ActionState.PAUSE
     for x in range(turns - 1):
-        engine.text_queue.append(f"{attacker.name} is still charging an attack!")
-        yield PlayerStates.WAIT_FOR_OPPONENT
+        engine.add_text(f"{attacker.name} is still charging an attack!")
+        yield ActionState.PAUSE
 
-    engine.text_queue.append(f"{attacker.name} Struck!")
+    engine.add_text(f"{attacker.name} Struck!")
     opponent.decrease_hp(damage * attacker.stats.attack)
+    yield ActionState.END
 
 
-def recoil_hit(damage, recoil, attacker, opponent, engine):
-    # takes health from the attacker and boosts the strength stats for this move
+def recoil_hit(damage, recoil, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+    opponent = engine.get_opponent(attacker)
+
+    # takes health from the attacker and boosts the strength stats for this action
     opponent.decrease_hp(damage * attacker.stats.attack)
-    yield PlayerStates.SKIP_OPPONENTS_TURN
+    yield ActionState.CONTINUE
 
-    engine.text_queue.append(f"{attacker.name} was hurt by recoil")
+    engine.add_text(f"{attacker.name} was hurt by recoil")
     attacker.decrease_hp(recoil)
+    yield ActionState.END
 
 
 # TODO: add a lang table or sum to convert id to localized name. so they don't have to be fully lowercase.
-punch = DefaultAttack("punch", partial(simple_damage, 6))
-schlap = DefaultAttack("multi", partial(multi_hit, 10, 1, 5, 0.8))
-two_piece = DefaultAttack("two piece", partial(charge_move, 18, 1))
-one_piece = DefaultAttack("one piece", partial(recoil_hit, 20, 10))
+punch = Action("punch", lambda *args: simple_damage(12, *args))
+multi = Action("multi", lambda *args: multi_hit(10, 1, 5, 0.8, *args))
+two_piece = Action("two piece", lambda *args: charge_move(18, 1, *args))
+one_piece = Action("one piece", lambda *args: recoil_hit(20, 10, *args))
+
+test = Action("test", test_move)
 
 taekwondo = []
-basic = [punch, schlap, two_piece, one_piece]
+basic = [punch, multi, two_piece, one_piece]
