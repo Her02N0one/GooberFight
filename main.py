@@ -11,20 +11,32 @@ from fighters import Fighter
 
 # TODO: change system to use "curses" instead of regular console logs
 
-# TODO: Rename all instances of "move" to action. because the "move" system will actually be the only system for
-#  triggering events
-
 def clear():
     os.system('clear' if os.name == 'posix' else 'cls')
 
 
 class ConsoleEngine:
-    def __init__(self, battle_engine: engine.BattleEngine, main_ui, secondary_ui):
+    def __init__(self, battle_engine: BattleEngine, main_ui, secondary_ui):
         self.main_ui = main_ui
         self.secondary_ui = secondary_ui
         self.battle_engine = battle_engine
-        self.player_1 = self.battle_engine.p1
-        self.player_2 = self.battle_engine.p2
+        self.attacker = self.battle_engine.attacker
+        self.opponent = self.battle_engine.opponent
+
+    def parse_input(self, console_input: str):
+        console_input = console_input.lower()
+        if console_input == "fight":
+            self.change_secondary_ui(lambda: console_util.show_moves(self.attacker))
+
+        elif console_input in ["", "back", "return"]:
+            self.change_secondary_ui(console_util.print_menu)
+
+        elif console_input in ["surrender", "quit", "exit"]:
+            return
+
+        for move in self.battle_engine.attacker.moves:
+            if console_input == move.name:
+                self.battle_engine.attacker.activate_move(move)
 
     def change_main_ui(self, menu: callable):
         self.main_ui = menu
@@ -39,7 +51,7 @@ class ConsoleEngine:
             console_util.delay_print(self.battle_engine.pop_text(), 0.05)
             time.sleep(0.08)
         else:
-            if self.player_1.action is None:
+            if self.attacker.action is None:
                 self.secondary_ui()
 
 
@@ -60,25 +72,9 @@ def main():
         for _ in battle_engine.update():
             console_engine.update_console()
 
-            while player_1.action is None:
-                console_input = input("> ").lower()
-
-                if console_input == "fight":
-                    console_engine.change_secondary_ui(lambda: console_util.show_moves(player_1))
-
-                elif console_input in ["", "back", "return"]:
-                    console_engine.change_secondary_ui(console_util.print_menu)
-
-                elif console_input in ["surrender", "quit", "exit"]:
-                    return
-
-                for move in player_1.moves:
-                    if console_input == move.name:
-                        player_1.activate_move(move)
-
+            while battle_engine.attacker.is_idle():
+                console_engine.parse_input(input("> ").lower())
                 console_engine.update_console()
-
-            console_engine.update_console()
 
 
 if __name__ == "__main__":
