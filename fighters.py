@@ -32,6 +32,9 @@ class Fighter:  # TODO: use functions to access dataclasses, shortens code and i
 
         self.alive = True
 
+    def idle(self):
+        return self.action is None
+    
     def add_move(self, move: data.Action):
         if (len(self.moves) + 1) <= self.move_limit:
             self.moves.append(move)

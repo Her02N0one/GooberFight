@@ -59,8 +59,8 @@ def main():
     while True:
         for _ in battle_engine.update():
             console_engine.update_console()
-
-            while player_1.action is None:
+            
+            while player_1.idle():  # take input and update ui until a move is selected.
                 console_input = input("> ").lower()
 
                 if console_input == "fight":
@@ -78,7 +78,7 @@ def main():
 
                 console_engine.update_console()
 
-            console_engine.update_console()
+
 
 
 if __name__ == "__main__":
