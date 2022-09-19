@@ -22,9 +22,11 @@ def test_move(self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> I
 
 
 def fast_punch(damage, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-
+    og_speed = self.stats.speed
+    self.stats.speed = og_speed//2
     # takes a number of damage as an input, multiplied with attacker's strength stat.
     opponent.decrease_hp(damage * self.stats.attack)
+    
     yield ActionState.END
 
 def simple_damage(damage, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:

@@ -8,6 +8,7 @@ from data import Stats
 from engine import BattleEngine
 from fighters import Fighter
 
+FAST_TEXT = False
 
 # TODO: change system to use "curses" instead of regular console logs
 
@@ -41,14 +42,20 @@ class ConsoleEngine:
             if console_input == move.name:
                 battle_engine.attacker.set_action(move)
 
+        
+
     def render(self, battle_engine, update_queue=False):
         clear()
         self.main_ui()
         if battle_engine.has_text() and update_queue:
-            console_util.delay_print(battle_engine.pop_text(), 0.05)
-            time.sleep(0.08)
+            if FAST_TEXT:
+                print("  " +battle_engine.pop_text())
+                time.sleep(0.25)
+            else:
+                console_util.delay_print(battle_engine.pop_text(), 0.05)
+                time.sleep(0.25)
         else:
-            if battle_engine.attacker.action is None:
+            if battle_engine.attacker.is_idle():
                 self.secondary_ui()
 
 
@@ -65,7 +72,7 @@ def main():
 
     clear()
     # when implemented, "outcome" will tell engine whether to start processing the text queue or not
-    for current_round, outcome in battle_engine.wrap(console_engine.update):
+    for outcome in battle_engine.wrap(console_engine.update):
         if outcome == -1:
             return -1
         console_engine.render(battle_engine, True)

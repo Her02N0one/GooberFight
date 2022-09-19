@@ -25,6 +25,8 @@ class Fighter:  # TODO: use functions to access dataclasses, shortens code and i
         self.hp = self.stats.health
 
         # could be coupled
+        # TODO: change to action "queue" system
+        # so that not all actions have to end the players turn.
         self.action = None
         self.state = None
 
@@ -33,7 +35,7 @@ class Fighter:  # TODO: use functions to access dataclasses, shortens code and i
         self.alive = True
 
     def is_idle(self):
-        return self.action is None
+        return self.action is None 
 
     def action_is_active(self):
         return (self.action is not None) and (type(self.action) != data.Action)
@@ -54,10 +56,10 @@ class Fighter:  # TODO: use functions to access dataclasses, shortens code and i
         while self.action_is_active():
             self.iterate_action()
             yield
-            if self.state == data.ActionState.PAUSE:
-                break
             if self.state == data.ActionState.CONTINUE:
                 continue
+            if self.state == data.ActionState.PAUSE:
+                break
 
     def iterate_action(self):
         try:
