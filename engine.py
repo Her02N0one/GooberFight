@@ -1,8 +1,11 @@
+from typing import Callable
 
 import data
 from fighters import Fighter
+import random
 
-
+# TODO: make sure certain methods are "private"
+# and make sure state can be modified with it's public methods
 class BattleEngine:
     """
     Holds the state of the current battle
@@ -24,22 +27,13 @@ class BattleEngine:
 
     def get_order(self):
         order = [self.attacker, self.opponent]
-        order.sort(key=lambda fighter: fighter.stats.speed, reverse=True)
+
+        if self.attacker.stats.speed == self.opponent.stats.speed:
+            random.shuffle(order)
+        else:
+            order.sort(key=lambda fighter: fighter.stats.speed, reverse=True)
+
         return order
-
-    # Action Related methods
-    def activate_action(self, attacker: Fighter):
-        self.add_text(f"{attacker.name} used {attacker.action.name}")
-        attacker.action = attacker.action.action(attacker, self)
-        attacker.state = data.ActionState.CONTINUE
-
-    def do_action(self, attacker: Fighter):
-        if type(attacker.action) == data.Action:
-            self.activate_action(attacker)
-            yield
-
-        for _ in attacker.do_action():
-            yield
 
     # text queue methods
     def has_text(self):
@@ -54,15 +48,51 @@ class BattleEngine:
     def add_text(self, text: str):
         self._text_queue.append(text)
 
+    def wrap(self, func):
+        for current_round in self._update():
+            for outcome in self._scheduled_state_change(func):
+                yield current_round, outcome
+
+    def _scheduled_state_change(self, func):
+        yield  # return to render before parsing, so screen can appear
+        while self.attacker.is_idle() and (self.opponent.is_idle() or self.opponent.state == data.ActionState.PAUSE):
+            yield func(self)
+
     # heart of the engine
-    def update(self):
+    def _update(self):
+        current_round = 0
         while True:
-            if self.opponent.action is None:
+            current_round += 1
+            if not self.attacker.is_idle() and self.opponent.action is None:
                 # player 2 AI will go here.
-                self.opponent.activate_move(self.opponent.moves[0])
+                self.opponent.set_action(self.opponent.moves[0])
 
             if self.attacker.action is not None and self.opponent.action is not None:
-                for player in self.get_order():
-                    for _ in self.do_action(player):
+
+                for current_attacker in self.get_order():
+
+                    if not current_attacker.action_is_active():
+                        self.add_text(f"{current_attacker.name} used {current_attacker.action.name}")
+                        current_attacker.activate_action(self.get_opponent(current_attacker), self)
                         yield
-            yield
+
+                    for _ in current_attacker.do_action():
+                        yield current_round
+            yield current_round
+
+
+"""
+game engine should be able to handle all possible states of the game.
+which means the battle engine could potentially become more of an abstract class.
+"""
+
+
+class GameEngine:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def update(self, *args, **kwargs):
+        pass
+
+    def render(self, *args, **kwargs):
+        pass

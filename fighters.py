@@ -35,26 +35,29 @@ class Fighter:  # TODO: use functions to access dataclasses, shortens code and i
     def is_idle(self):
         return self.action is None
 
+    def action_is_active(self):
+        return (self.action is not None) and (type(self.action) != data.Action)
+
     def add_move(self, move: data.Action):
         if (len(self.moves) + 1) <= self.move_limit:
             self.moves.append(move)
 
-    def activate_move(self, move):
-        if move in self.moves:
-            self.action = move
-        else:
-            return -1
+    def set_action(self, action):
+        self.action = action
+
+    def activate_action(self, opponent, engine):
+        if not self.action_is_active():
+            self.action = self.action.action_generator(self, opponent, engine)
+            self.state = data.ActionState.CONTINUE
 
     def do_action(self):
-        if self.action is not None:
-            while True:
-                self.iterate_action()
-
-                if self.action is None or self.state == data.ActionState.PAUSE:
-                    break
-                if self.state == data.ActionState.CONTINUE:
-                    yield
+        while self.action_is_active():
+            self.iterate_action()
             yield
+            if self.state == data.ActionState.PAUSE:
+                break
+            if self.state == data.ActionState.CONTINUE:
+                continue
 
     def iterate_action(self):
         try:

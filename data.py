@@ -19,9 +19,9 @@ class Stats:
 
 
 class ActionState(Enum):
-    END = 0  # action is done, and is set to None
-    PAUSE = 1  # action is done, but is not set to None
-    CONTINUE = 2  # action is not done.
+    END = 0  # action_generator is done, and is set to None
+    PAUSE = 1  # action_generator is done, but is not set to None
+    CONTINUE = 2  # action_generator is not done.
 
 
 @dataclass
@@ -32,4 +32,4 @@ class Action:
     """
 
     name: str
-    action: Callable[['Fighter', 'BattleEngine'], Iterator[ActionState]]
+    action_generator: Callable[['Fighter', 'BattleEngine'], Iterator[ActionState]]

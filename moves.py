@@ -9,34 +9,37 @@ if TYPE_CHECKING:
     from engine import BattleEngine
 
 
-def test_move(attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-    opponent = engine.get_opponent(attacker)
+def test_move(self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
 
-    engine.add_text(f"{attacker.name} is charging an attack!")
+    engine.add_text(f"{self.name} is charging an attack!")
     yield ActionState.PAUSE
 
-    engine.add_text(f"{attacker.name} struck")
+    engine.add_text(f"{self.name} struck")
     yield ActionState.CONTINUE
-    engine.add_text(f"{attacker.name} struck again!")
+    engine.add_text(f"{self.name} struck again!")
 
     yield ActionState.END
 
 
-def simple_damage(damage, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-    opponent = engine.get_opponent(attacker)
+def fast_punch(damage, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
 
     # takes a number of damage as an input, multiplied with attacker's strength stat.
-    opponent.decrease_hp(damage * attacker.stats.attack)
+    opponent.decrease_hp(damage * self.stats.attack)
+    yield ActionState.END
+
+def simple_damage(damage, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+
+    # takes a number of damage as an input, multiplied with attacker's strength stat.
+    opponent.decrease_hp(damage * self.stats.attack)
     yield ActionState.END
 
 
-def multi_hit(damage, chance, max_hits, damp, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-    opponent = engine.get_opponent(attacker)
+def multi_hit(damage, chance, max_hits, damp, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
 
     hits = 0
     while True:
         hits += 1
-        opponent.decrease_hp((damage * (damp ** hits)) * attacker.stats.attack)
+        opponent.decrease_hp((damage * (damp ** hits)) * self.stats.attack)
         if hits > 1:
             engine.add_text(f"Hit {hits} times!" + "!" * hits)
         if (chance < random.random()) or hits >= max_hits:
@@ -45,29 +48,27 @@ def multi_hit(damage, chance, max_hits, damp, attacker: 'Fighter', engine: 'Batt
             yield ActionState.CONTINUE
 
 
-def charge_move(damage, turns, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-    opponent = engine.get_opponent(attacker)
+def charge_move(damage, turns, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
 
-    engine.add_text(f"{attacker.name} is charging an attack!")
+    engine.add_text(f"{self.name} is charging an attack!")
     yield ActionState.PAUSE
     for x in range(turns - 1):
-        engine.add_text(f"{attacker.name} is still charging an attack!")
+        engine.add_text(f"{self.name} is still charging an attack!")
         yield ActionState.PAUSE
 
-    engine.add_text(f"{attacker.name} Struck!")
-    opponent.decrease_hp(damage * attacker.stats.attack)
+    engine.add_text(f"{self.name} Struck!")
+    opponent.decrease_hp(damage * self.stats.attack)
     yield ActionState.END
 
 
-def recoil_hit(damage, recoil, attacker: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-    opponent = engine.get_opponent(attacker)
+def recoil_hit(damage, recoil, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
 
-    # takes health from the attacker and boosts the strength stats for this action
-    opponent.decrease_hp(damage * attacker.stats.attack)
+    # takes health from the attacker and boosts the strength stats for this action_generator
+    opponent.decrease_hp(damage * self.stats.attack)
     yield ActionState.CONTINUE
 
-    engine.add_text(f"{attacker.name} was hurt by recoil")
-    attacker.decrease_hp(recoil)
+    engine.add_text(f"{self.name} was hurt by recoil")
+    self.decrease_hp(recoil)
     yield ActionState.END
 
 
