@@ -10,34 +10,37 @@ if TYPE_CHECKING:
 
 
 def test_move(self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-
     engine.add_text(f"{self.name} is charging an attack!")
     yield ActionState.PAUSE
 
     engine.add_text(f"{self.name} struck")
+
     yield ActionState.CONTINUE
+
     engine.add_text(f"{self.name} struck again!")
 
     yield ActionState.END
 
 
-def fast_punch(damage, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+def fast_punch(damage,
+               self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
     og_speed = self.stats.speed
-    self.stats.speed = og_speed//2
+    self.stats.speed = og_speed // 2
     # takes a number of damage as an input, multiplied with attacker's strength stat.
     opponent.decrease_hp(damage * self.stats.attack)
-    
-    yield ActionState.END
 
-def simple_damage(damage, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-
-    # takes a number of damage as an input, multiplied with attacker's strength stat.
-    opponent.decrease_hp(damage * self.stats.attack)
     yield ActionState.END
 
 
-def multi_hit(damage, chance, max_hits, damp, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+def simple_damage(damage,
+                  self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
+    # takes a number of damage as an input, multiplied with attacker's strength stat.
+    opponent.decrease_hp(damage * self.stats.attack)
+    yield ActionState.END
 
+
+def multi_hit(damage, chance, max_hits, damp,
+              self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
     hits = 0
     while True:
         hits += 1
@@ -50,8 +53,8 @@ def multi_hit(damage, chance, max_hits, damp, self: 'Fighter', opponent: 'Fighte
             yield ActionState.CONTINUE
 
 
-def charge_move(damage, turns, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-
+def charge_move(damage, turns,
+                self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
     engine.add_text(f"{self.name} is charging an attack!")
     yield ActionState.PAUSE
     for x in range(turns - 1):
@@ -63,8 +66,8 @@ def charge_move(damage, turns, self: 'Fighter', opponent: 'Fighter', engine: 'Ba
     yield ActionState.END
 
 
-def recoil_hit(damage, recoil, self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-
+def recoil_hit(damage, recoil,
+               self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
     # takes health from the attacker and boosts the strength stats for this action_generator
     opponent.decrease_hp(damage * self.stats.attack)
     yield ActionState.CONTINUE
