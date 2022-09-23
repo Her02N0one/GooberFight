@@ -1,8 +1,21 @@
 from typing import Callable
+import time
 
+import console_util
 import data
 from fighters import Fighter
 import random
+
+
+class GameEngine:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def input(self, *args, **kwargs):
+        pass
+
+    def update(self, *args, **kwargs):
+        pass
 
 
 # TODO: make sure certain methods are "private"
@@ -17,25 +30,27 @@ class BattleEngine:
 
     def __init__(self, p1: Fighter, p2: Fighter):
         # should all be private members
-        self.attacker = p1
+        self.player = p1
         self.opponent = p2
         self._text_queue = []
 
     # Fighter related methods
     def get_opponent(self, player):
-        if player == self.attacker:
+        if player == self.player:
             return self.opponent
         if player == self.opponent:
-            return self.attacker
+            return self.player
 
+    def _activate_move(self, attacker: Fighter):
+        self.add_text(f"{attacker.name} used {attacker.action.name}")
+        attacker.activate_action(self.get_opponent(attacker), self)
+    
     def get_order(self):
-        order = [self.attacker, self.opponent]
-
-        if self.attacker.stats.speed == self.opponent.stats.speed:
+        order = [self.player, self.opponent]
+        if self.player.stats.speed == self.opponent.stats.speed:
             random.shuffle(order)
         else:
             order.sort(key=lambda fighter: fighter.stats.speed, reverse=True)  # sort list by speed
-
         return order
 
     # text queue methods
@@ -51,29 +66,24 @@ class BattleEngine:
     def add_text(self, text: str):
         self._text_queue.append(text)
 
-    def wrap(self, func):
-        yield 0
+    def wrap(self, frontend_engine: GameEngine):
         while True:
-            # input state
-            while self.attacker.is_idle():
-                yield func(self)
+            frontend_engine.update(self)
+            while self.player.is_idle():
+                frontend_engine.input(self)
+                frontend_engine.update(self)
 
-            # battle state
-            for _ in self._update():
-                yield 0
+            while self.opponent.is_idle():
+                self.opponent.set_action(self.opponent.moves[0])  # TODO: player 2 AI will go here.
+                frontend_engine.update(self)
 
-    def _activate_move(self, attacker: Fighter):
-        self.add_text(f"{attacker.name} used {attacker.action.name}")
-        attacker.activate_action(self.get_opponent(attacker), self)
+            for _ in self._battle_stage():
+                frontend_engine.update(self)
 
-    # heart of the engine
-    def _update(self):
-        if self.opponent.is_idle():
-            # TODO: player 2 AI will go here.
-            self.opponent.set_action(self.opponent.moves[0])
 
-        # TODO: make action system handling work for actions that happen during the input state.
-        if not self.attacker.is_idle() and not self.opponent.is_idle():
+      
+    def _battle_stage(self):
+        if not self.player.is_idle() and not self.opponent.is_idle():
             for current_attacker in self.get_order():
                 if not current_attacker.action_is_active():
                     self._activate_move(current_attacker)
@@ -81,19 +91,46 @@ class BattleEngine:
 
                 for _ in current_attacker.do_action():
                     yield
-        yield
 
 
-"""
-game engine should be able to handle all possible states of the game.
-which means the battle engine could potentially become more of an abstract class.
-"""
-class GameEngine:
-    def __init__(self, *args, **kwargs):
-        pass
+FAST_TEXT = False
+class ConsoleEngine(GameEngine):
+    def __init__(self, main_ui, secondary_ui):
+        self.main_ui = main_ui
+        self.secondary_ui = secondary_ui
 
-    def update(self, *args, **kwargs):
-        pass
+    def change_main_ui(self, menu: callable):
+        self.main_ui = menu
 
-    def render(self, *args, **kwargs):
-        pass
+    def change_secondary_ui(self, menu: callable):
+        self.secondary_ui = menu
+
+    def input(self, battle_engine: BattleEngine):
+        console_input = input("> ").lower()
+        if console_input == "fight":
+            self.change_secondary_ui(lambda: console_util.show_moves(battle_engine.player))
+
+        elif console_input in ["", "back", "return"]:
+            self.change_secondary_ui(console_util.print_menu)
+
+        elif console_input in ["surrender", "quit", "exit"]:
+            return -1
+
+        for move in battle_engine.player.moves:
+            if console_input == move.name:
+                battle_engine.player.set_action(move)
+
+        
+    def update(self, battle_engine):
+        console_util.clear()
+        self.main_ui()
+        if battle_engine.has_text():
+            if FAST_TEXT:
+                print("  " +battle_engine.pop_text())
+                time.sleep(0.25)
+            else:
+                console_util.delay_print(battle_engine.pop_text(), 0.05)
+                time.sleep(0.25)
+        else:
+            if battle_engine.player.is_idle():
+                self.secondary_ui()

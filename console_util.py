@@ -1,7 +1,12 @@
 import sys
 import time
+import os
 
 from fighters import Fighter
+
+
+def clear():
+    os.system('clear' if os.name == 'posix' else 'cls')
 
 
 def draw_border(text_array):

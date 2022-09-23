@@ -22,16 +22,6 @@ def test_move(self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> I
     yield ActionState.END
 
 
-def fast_punch(damage,
-               self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
-    og_speed = self.stats.speed
-    self.stats.speed = og_speed // 2
-    # takes a number of damage as an input, multiplied with attacker's strength stat.
-    opponent.decrease_hp(damage * self.stats.attack)
-
-    yield ActionState.END
-
-
 def simple_damage(damage,
                   self: 'Fighter', opponent: 'Fighter', engine: 'BattleEngine') -> Iterator[ActionState]:
     # takes a number of damage as an input, multiplied with attacker's strength stat.
@@ -78,12 +68,16 @@ def recoil_hit(damage, recoil,
 
 
 # TODO: add a lang table or sum to convert id to localized name. so they don't have to be fully lowercase.
+# with present tense verb form as well.
 punch = Action("punch", lambda *args: simple_damage(12, *args))
-multi = Action("multi", lambda *args: multi_hit(10, 1, 5, 0.8, *args))
-two_piece = Action("two piece", lambda *args: charge_move(18, 1, *args))
+schlap = Action("multi", lambda *args: charge_move(18, 1, *args))
+two_piece = Action("two piece", lambda *args: multi_hit(10, 0.9, 2, 0.8, *args))
 one_piece = Action("one piece", lambda *args: recoil_hit(20, 10, *args))
+
+straight_hands = Action("straight hands", lambda *args: multi_hit(5, 1, 4, 1, *args))
 
 test = Action("test", test_move)
 
-taekwondo = []
-basic = [punch, multi, two_piece, one_piece]
+
+boxing = [straight_hands]
+basic = [punch, schlap, two_piece, one_piece]
